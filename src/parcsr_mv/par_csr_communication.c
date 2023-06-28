@@ -64,11 +64,46 @@ hypre_ParCSRPersistentCommHandleCreate( HYPRE_Int job, hypre_ParCSRCommPkg *comm
    HYPRE_Int num_recvs = hypre_ParCSRCommPkgNumRecvs(comm_pkg);
    MPI_Comm  comm      = hypre_ParCSRCommPkgComm(comm_pkg);
 
+
+#ifdef HYPRE_USING_NODE_AWARE_MPI
+   HYPRE_Int num_requests;
+   hypre_MPI_Request *requests;
+
+   HYPRE_Int *send_sizes;
+   HYPRE_Int *recv_sizes;
+   HYPRE_BigInt num_send_elmts;
+   HYPRE_BigInt num_recv_elmts;
+   MPIX_Request *Xrequest;
+
+   HYPRE_Int node_aware_on = hypre_HandleUsingNodeAwareMPI(hypre_handle());
+   if (comm_pkg->use_neighbor && node_aware_on) {
+      if (comm_pkg->neighbor_comm == NULL) {
+         hypre_printf("Trying to communicate with a NULL communicator\n");
+         hypre_assert(1 == 0);
+      }
+
+      send_sizes = hypre_TAlloc(HYPRE_Int, num_sends, HYPRE_MEMORY_HOST);
+      recv_sizes = hypre_TAlloc(HYPRE_Int, num_recvs, HYPRE_MEMORY_HOST);
+
+      num_send_elmts = hypre_ParCSRCommPkgSendMapStart(comm_pkg, num_sends);
+      num_recv_elmts = hypre_ParCSRCommPkgRecvVecStart(comm_pkg, num_recvs);
+   } else {
+      num_requests = num_sends + num_recvs;
+      requests = hypre_CTAlloc(hypre_MPI_Request, num_requests, HYPRE_MEMORY_HOST);
+
+      hypre_ParCSRCommHandleNumRequests(comm_handle) = num_requests;
+      hypre_ParCSRCommHandleRequests(comm_handle)    = requests;
+   }
+#else
    HYPRE_Int num_requests = num_sends + num_recvs;
    hypre_MPI_Request *requests = hypre_CTAlloc(hypre_MPI_Request, num_requests, HYPRE_MEMORY_HOST);
 
    hypre_ParCSRCommHandleNumRequests(comm_handle) = num_requests;
    hypre_ParCSRCommHandleRequests(comm_handle)    = requests;
+#endif
+
+   //int rank;
+   //hypre_MPI_Comm_rank(comm_pkg->comm, &rank);
 
 #ifdef HYPRE_USING_NODE_AWARE_MPI
    if (comm_pkg->neighbor_comm == NULL) {
@@ -114,8 +149,6 @@ hypre_ParCSRPersistentCommHandleCreate( HYPRE_Int job, hypre_ParCSRCommPkg *comm
                hypre_MPI_Send_init( (HYPRE_Complex *)send_buff + vec_start, vec_len, HYPRE_MPI_COMPLEX,
                                     ip, 0, comm, requests + num_recvs + i );
             }
-            //int rank;
-            //MPI_Comm_rank(MPI_COMM_WORLD, &rank);
             //if (rank == 0) { hypre_printf("Standard init done\n"); }
          } else {
             for (i = 0; i < num_recvs; ++i)
@@ -137,8 +170,6 @@ hypre_ParCSRPersistentCommHandleCreate( HYPRE_Int job, hypre_ParCSRCommPkg *comm
                                                    comm_pkg->global_recv_indices,
                                                    HYPRE_MPI_COMPLEX, comm_pkg->neighbor_comm,
                                                    MPI_INFO_NULL, &Xrequest);
-            //int rank;
-            //MPI_Comm_rank(MPI_COMM_WORLD, &rank);
             //if (rank == 0) { hypre_printf("Node-aware init done\n"); }
          }
 #else
@@ -204,8 +235,6 @@ hypre_ParCSRPersistentCommHandleCreate( HYPRE_Int job, hypre_ParCSRCommPkg *comm
                                                    hypre_ParCSRCommPkgSendMapStarts(comm_pkg),
                                                    HYPRE_MPI_COMPLEX, comm_pkg->neighborT_comm,
                                                    MPI_INFO_NULL, &Xrequest);
-            //int rank;
-            //MPI_Comm_rank(MPI_COMM_WORLD, &rank);
             //if (rank == 0) { hypre_printf("Node-aware transpose init done\n"); }
          }
 #else
@@ -500,6 +529,7 @@ hypre_ParCSRPersistentCommHandleCreate( HYPRE_Int job, hypre_ParCSRCommPkg *comm
          break;
    } // switch (job_type)
 
+   hypre_ParCSRCommHandleCommPkg(comm_handle)        = comm_pkg;
    hypre_ParCSRCommHandleRecvDataBuffer(comm_handle) = recv_buff;
    hypre_ParCSRCommHandleSendDataBuffer(comm_handle) = send_buff;
    hypre_ParCSRCommHandleNumSendBytes(comm_handle)   = num_bytes_send;
@@ -507,10 +537,12 @@ hypre_ParCSRPersistentCommHandleCreate( HYPRE_Int job, hypre_ParCSRCommPkg *comm
 
 
 #ifdef HYPRE_USING_NODE_AWARE_MPI
-   comm_handle->Xrequest = Xrequest;
+   if (comm_pkg->use_neighbor && node_aware_on) {
+      comm_handle->Xrequest = Xrequest;
 
-   hypre_TFree(send_sizes, HYPRE_MEMORY_HOST);
-   hypre_TFree(recv_sizes, HYPRE_MEMORY_HOST);
+      hypre_TFree(send_sizes, HYPRE_MEMORY_HOST);
+      hypre_TFree(recv_sizes, HYPRE_MEMORY_HOST);
+   }
 #endif
 
    return ( comm_handle );
@@ -541,6 +573,9 @@ hypre_ParCSRCommPkgGetPersistentCommHandle( HYPRE_Int job, hypre_ParCSRCommPkg *
 void
 hypre_ParCSRPersistentCommHandleDestroy( hypre_ParCSRPersistentCommHandle *comm_handle )
 {
+   //int rank;
+   //hypre_MPI_Comm_rank(comm_handle->comm_pkg->comm, &rank);
+   //if (rank == 0) { hypre_printf("Destroying\n"); }
    if (comm_handle)
    {
       hypre_TFree(hypre_ParCSRCommHandleSendDataBuffer(comm_handle), HYPRE_MEMORY_HOST);
@@ -573,9 +608,6 @@ hypre_ParCSRPersistentCommHandleStart( hypre_ParCSRPersistentCommHandle *comm_ha
    if (!hypre_HandleUsingNodeAwareMPI(hypre_handle())) {
       if (hypre_ParCSRCommHandleNumRequests(comm_handle) > 0)
       {
-         //int rank;
-         //MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-         //if (rank == 0) { hypre_printf("Standard starting\n"); }
          hypre_TMemcpy( hypre_ParCSRCommHandleSendDataBuffer(comm_handle),
                         send_data,
                         char,
@@ -584,6 +616,7 @@ hypre_ParCSRPersistentCommHandleStart( hypre_ParCSRPersistentCommHandle *comm_ha
                         send_memory_location );
          HYPRE_Int ret = hypre_MPI_Startall(hypre_ParCSRCommHandleNumRequests(comm_handle),
                                             hypre_ParCSRCommHandleRequests(comm_handle));
+         //if (rank == 0) { hypre_printf("Standard started\n"); }
          if (hypre_MPI_SUCCESS != ret)
          {
             hypre_error_w_msg(HYPRE_ERROR_GENERIC, "MPI error\n");
@@ -602,7 +635,6 @@ hypre_ParCSRPersistentCommHandleStart( hypre_ParCSRPersistentCommHandle *comm_ha
                         hypre_ParCSRCommHandleNumSendBytes(comm_handle),
                         HYPRE_MEMORY_HOST,
                         send_memory_location );
-         //if (rank == 0) { hypre_printf("Node-aware start copied\n"); }
          HYPRE_Int ret = (HYPRE_Int) MPIX_Start(comm_handle->Xrequest);
          //if (rank == 0) { hypre_printf("Node-aware started\n"); }
          if (hypre_MPI_SUCCESS != ret)
@@ -1406,6 +1438,10 @@ hypre_ParCSRCommPkgCreateAndFill( MPI_Comm              comm,
    }
 #endif
 
+#ifdef HYPRE_USING_NODE_AWARE_MPI
+   comm_pkg->use_neighbor = 0;
+#endif
+
    /* Set input info */
    hypre_ParCSRCommPkgComm(comm_pkg)          = comm;
    hypre_ParCSRCommPkgNumRecvs(comm_pkg)      = num_recvs;
@@ -1572,6 +1608,10 @@ hypre_MatvecCommPkgCreate ( hypre_ParCSRMatrix *A )
                                    num_cols_offd, global_num_cols,
                                    apart,
                                    comm_pkg );
+#ifdef HYPRE_USING_NODE_AWARE_MPI
+   comm_pkg->use_neighbor = 1;
+   hypre_ParCSRCreateCommGraph( first_col_diag, col_map_offd, comm, comm_pkg );
+#endif
 
    HYPRE_ANNOTATE_FUNC_END;
 

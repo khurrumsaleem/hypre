@@ -1648,6 +1648,19 @@ main( hypre_int argc,
          arg_index++;
          gpu_aware_mpi = atoi(argv[arg_index++]);
       }
+#if defined(HYPRE_USING_NODE_AWARE_MPI)
+      else if ( strcmp(argv[arg_index], "-node_aware_lvl_threshold") == 0 )
+      {
+         arg_index++;
+         hypre_HandleNodeAwareSwitchoverThreshold(hypre_handle()) = atoi(argv[arg_index++]);
+         if (hypre_HandleNodeAwareSwitchoverThreshold(hypre_handle()) > 0) {
+            hypre_HandleUsingNodeAwareMPI(hypre_handle()) = 0;
+         }
+         //if (myid == 0) {
+         //   printf("Set LVL Thresh: %d\n", hypre_HandleNodeAwareSwitchoverThreshold(hypre_handle()));
+         //}
+      }
+#endif
       else
       {
          arg_index++;

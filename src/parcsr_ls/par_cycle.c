@@ -288,9 +288,11 @@ hypre_BoomerAMGCycle( void              *amg_vdata,
 #ifdef HYPRE_USING_NODE_AWARE_MPI
       if (level >= hypre_HandleNodeAwareSwitchoverThreshold(hypre_handle()))
       {
+         //if (my_id == 0) { printf("LVL %d using node aware, th: %d\n", level, hypre_HandleNodeAwareSwitchoverThreshold(hypre_handle())); }
          hypre_HandleUsingNodeAwareMPI(hypre_handle()) = 1;
       } else
       {
+         //if (my_id == 0) { printf("LVL %d NOT using node aware\n", level); }
          hypre_HandleUsingNodeAwareMPI(hypre_handle()) = 0;
       }
 #endif

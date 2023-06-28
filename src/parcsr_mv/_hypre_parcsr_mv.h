@@ -809,6 +809,10 @@ HYPRE_Int hypre_RangeFillResponseIJDetermineRecvProcs ( void *p_recv_contact_buf
 HYPRE_Int hypre_FillResponseIJDetermineSendProcs ( void *p_recv_contact_buf, HYPRE_Int contact_size,
                                                    HYPRE_Int contact_proc, void *ro, MPI_Comm comm, void **p_send_response_buf,
                                                    HYPRE_Int *response_message_size );
+void hypre_ParCSRCreateCommGraph( HYPRE_BigInt first_col_diag,
+                                  HYPRE_BigInt *col_map_offd,
+                                  MPI_Comm comm,
+                                  hypre_ParCSRCommPkg *comm_pkg );
 
 /* numbers.c */
 hypre_NumbersNode *hypre_NumbersNewNode ( void );

@@ -137,7 +137,9 @@ typedef struct
 
 #define hypre_HandleMagmaQueue(hypre_handle)                     ((hypre_handle) -> magma_queue)
 
+#ifdef HYPRE_USING_NODE_AWARE_MPI
 #define hypre_HandleNodeAwareSwitchoverThreshold(hypre_handle)   ((hypre_handle) -> node_aware_switchover_threshold)
 #define hypre_HandleUsingNodeAwareMPI(hypre_handle)              ((hypre_handle) -> using_node_aware_mpi)
+#endif
 
 #endif
