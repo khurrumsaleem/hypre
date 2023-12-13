@@ -48,6 +48,13 @@ hypre_HandleCreate(void)
    hypre_HandleUsingNodeAwareMPI(hypre_handle_) = 1;
    hypre_HandleNodeAwareSwitchoverThreshold(hypre_handle_) = 0;
 #endif
+#if defined(HYPRE_USING_GPU) || defined(HYPRE_USING_DEVICE_OPENMP)
+#if defined(HYPRE_WITH_GPU_AWARE_MPI)
+   hypre_HandleUseGpuAwareMPI(hypre_handle_) = 1;
+#else
+   hypre_HandleUseGpuAwareMPI(hypre_handle_) = 0;
+#endif
+#endif
 
    return hypre_handle_;
 }
