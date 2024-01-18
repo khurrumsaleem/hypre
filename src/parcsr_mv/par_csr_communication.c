@@ -161,14 +161,13 @@ hypre_ParCSRPersistentCommHandleCreate( HYPRE_Int job, hypre_ParCSRCommPkg *comm
                send_sizes[i] = (hypre_ParCSRCommPkgSendMapStart(comm_pkg, i + 1) -
                                 hypre_ParCSRCommPkgSendMapStart(comm_pkg, i));
             }
-            MPIX_Neighbor_locality_alltoallv_init( (HYPRE_Complex *)send_buff, send_sizes,
+            MPIX_Neighbor_topo_alltoallv_init( (HYPRE_Complex *)send_buff, send_sizes,
                                                    hypre_ParCSRCommPkgSendMapStarts(comm_pkg),
-                                                   comm_pkg->global_send_indices,
                                                    HYPRE_MPI_COMPLEX,
                                                    (HYPRE_Complex *)recv_buff, recv_sizes,
                                                    hypre_ParCSRCommPkgRecvVecStarts(comm_pkg),
-                                                   comm_pkg->global_recv_indices,
                                                    HYPRE_MPI_COMPLEX, comm_pkg->neighbor_comm,
+                                                   comm_pkg->comm,
                                                    MPI_INFO_NULL, &Xrequest);
             //if (rank == 0) { hypre_printf("Node-aware init done\n"); }
          }
@@ -228,12 +227,13 @@ hypre_ParCSRPersistentCommHandleCreate( HYPRE_Int job, hypre_ParCSRCommPkg *comm
                send_sizes[i] = (hypre_ParCSRCommPkgSendMapStart(comm_pkg, i + 1) -
                                 hypre_ParCSRCommPkgSendMapStart(comm_pkg, i));
             }
-            MPIX_Neighbor_part_locality_alltoallv_init( (HYPRE_Complex *)send_buff, recv_sizes,
+            MPIX_Neighbor_topo_alltoallv_init( (HYPRE_Complex *)send_buff, recv_sizes,
                                                    hypre_ParCSRCommPkgRecvVecStarts(comm_pkg),
                                                    HYPRE_MPI_COMPLEX,
                                                    (HYPRE_Complex *)recv_buff, send_sizes,
                                                    hypre_ParCSRCommPkgSendMapStarts(comm_pkg),
                                                    HYPRE_MPI_COMPLEX, comm_pkg->neighborT_comm,
+                                                   comm_pkg->comm,
                                                    MPI_INFO_NULL, &Xrequest);
             //if (rank == 0) { hypre_printf("Node-aware transpose init done\n"); }
          }
@@ -293,14 +293,13 @@ hypre_ParCSRPersistentCommHandleCreate( HYPRE_Int job, hypre_ParCSRCommPkg *comm
                send_sizes[i] = (hypre_ParCSRCommPkgSendMapStart(comm_pkg, i + 1) -
                                 hypre_ParCSRCommPkgSendMapStart(comm_pkg, i));
             }
-            MPIX_Neighbor_locality_alltoallv_init( (HYPRE_Int *)send_buff, send_sizes,
+            MPIX_Neighbor_topo_alltoallv_init( (HYPRE_Int *)send_buff, send_sizes,
                                                    hypre_ParCSRCommPkgSendMapStarts(comm_pkg),
-                                                   comm_pkg->global_send_indices,
                                                    HYPRE_MPI_INT,
                                                    (HYPRE_Int *)recv_buff, recv_sizes,
                                                    hypre_ParCSRCommPkgRecvVecStarts(comm_pkg),
-                                                   comm_pkg->global_recv_indices,
                                                    HYPRE_MPI_INT, comm_pkg->neighbor_comm,
+                                                   comm_pkg->comm,
                                                    0, &Xrequest);
          }
 #else
@@ -359,12 +358,13 @@ hypre_ParCSRPersistentCommHandleCreate( HYPRE_Int job, hypre_ParCSRCommPkg *comm
                send_sizes[i] = (hypre_ParCSRCommPkgSendMapStart(comm_pkg, i + 1) -
                                 hypre_ParCSRCommPkgSendMapStart(comm_pkg, i));
             }
-            MPIX_Neighbor_part_locality_alltoallv_init( (HYPRE_Int *)send_buff, recv_sizes,
+            MPIX_Neighbor_topo_alltoallv_init( (HYPRE_Int *)send_buff, recv_sizes,
                                                    hypre_ParCSRCommPkgRecvVecStarts(comm_pkg),
                                                    HYPRE_MPI_INT,
                                                    (HYPRE_Int *)recv_buff, send_sizes,
                                                    hypre_ParCSRCommPkgSendMapStarts(comm_pkg),
                                                    HYPRE_MPI_INT, comm_pkg->neighborT_comm,
+                                                   comm_pkg->comm,
                                                    0, &Xrequest);
          }
 #else
@@ -425,14 +425,13 @@ hypre_ParCSRPersistentCommHandleCreate( HYPRE_Int job, hypre_ParCSRCommPkg *comm
                send_sizes[i] = (hypre_ParCSRCommPkgSendMapStart(comm_pkg, i + 1) -
                                 hypre_ParCSRCommPkgSendMapStart(comm_pkg, i));
             }
-            MPIX_Neighbor_locality_alltoallv_init( (HYPRE_BigInt *)send_buff, send_sizes,
+            MPIX_Neighbor_topo_alltoallv_init( (HYPRE_BigInt *)send_buff, send_sizes,
                                                    hypre_ParCSRCommPkgSendMapStarts(comm_pkg),
-                                                   comm_pkg->global_send_indices,
                                                    HYPRE_MPI_BIG_INT,
                                                    (HYPRE_BigInt *)recv_buff, recv_sizes,
                                                    hypre_ParCSRCommPkgRecvVecStarts(comm_pkg),
-                                                   comm_pkg->global_recv_indices,
                                                    HYPRE_MPI_BIG_INT, comm_pkg->neighbor_comm,
+                                                   comm_pkg->comm,
                                                    0, &Xrequest);
          }
 #else
@@ -495,12 +494,13 @@ hypre_ParCSRPersistentCommHandleCreate( HYPRE_Int job, hypre_ParCSRCommPkg *comm
                send_sizes[i] = (hypre_ParCSRCommPkgSendMapStart(comm_pkg, i + 1) -
                                 hypre_ParCSRCommPkgSendMapStart(comm_pkg, i));
             }
-            MPIX_Neighbor_part_locality_alltoallv_init( (HYPRE_BigInt *)send_buff, recv_sizes,
+            MPIX_Neighbor_topo_alltoallv_init( (HYPRE_BigInt *)send_buff, recv_sizes,
                                                    hypre_ParCSRCommPkgRecvVecStarts(comm_pkg),
                                                    HYPRE_MPI_BIG_INT,
                                                    (HYPRE_BigInt *)recv_buff, send_sizes,
                                                    hypre_ParCSRCommPkgSendMapStarts(comm_pkg),
                                                    HYPRE_MPI_BIG_INT, comm_pkg->neighborT_comm,
+                                                   comm_pkg->comm,
                                                    0, &Xrequest);
          }
 #else
