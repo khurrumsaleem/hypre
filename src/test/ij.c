@@ -446,6 +446,10 @@ main( hypre_int argc,
    HYPRE_Int ilu_tri_solve = 1;
    HYPRE_Int ilu_ljac_iters = 5;
    HYPRE_Int ilu_ujac_iters = 5;
+   HYPRE_Int ilu_iter_setup_type = 0;
+   HYPRE_Int ilu_iter_setup_option = 0;
+   HYPRE_Int ilu_iter_setup_max_iter = 100;
+   HYPRE_Real ilu_iter_setup_tolerance = 1.e-6;
    HYPRE_Int ilu_sm_max_iter = 1;
    HYPRE_Real ilu_droptol = 1.0e-02;
    HYPRE_Int ilu_max_row_nnz = 1000;
@@ -1408,6 +1412,36 @@ main( hypre_int argc,
          /* Upper Jacobi Iterations */
          arg_index++;
          ilu_ujac_iters = atoi(argv[arg_index++]);
+      }
+      else if ( strcmp(argv[arg_index], "-ilu_iter_setup_type") == 0 )
+      {
+         /* Iterative setup for ILU (only with rocSPARSE)*/
+         arg_index++;
+         ilu_iter_setup_type = atoi(argv[arg_index++]);
+      }
+      else if ( strcmp(argv[arg_index], "-ilu_iter_setup_option") == 0 )
+      {
+         /* Iterative setup for ILU (only with rocSPARSE)*/
+         arg_index++;
+         ilu_iter_setup_option = atoi(argv[arg_index++]);
+      }
+      else if ( strcmp(argv[arg_index], "-ilu_iter_setup_option") == 0 )
+      {
+         /* Iterative setup for ILU (only with rocSPARSE)*/
+         arg_index++;
+         ilu_iter_setup_option = atoi(argv[arg_index++]);
+      }
+      else if ( strcmp(argv[arg_index], "-ilu_iter_setup_max_iter") == 0 )
+      {
+         /* Iterative setup for ILU (only with rocSPARSE)*/
+         arg_index++;
+         ilu_iter_setup_max_iter = atoi(argv[arg_index++]);
+      }
+      else if ( strcmp(argv[arg_index], "-ilu_iter_setup_tolerance") == 0 )
+      {
+         /* Iterative setup for ILU (only with rocSPARSE)*/
+         arg_index++;
+         ilu_iter_setup_tolerance = atof(argv[arg_index++]);
       }
       else if ( strcmp(argv[arg_index], "-ilu_droptol") == 0 )
       {
@@ -2623,6 +2657,14 @@ main( hypre_int argc,
          hypre_printf("  -ilu_max_row_nnz   <val>         : set max. num of nonzeros to keep per row = val \n");
          hypre_printf("  -ilu_schur_max_iter   <val>      : set max. num of iteration for GMRES/NSH Schur = val \n");
          hypre_printf("  -ilu_nsh_droptol   <val>         : set drop tolerance threshold for NSH = val \n");
+         hypre_printf("  -ilu_reordering <val>            : 0: no reordering. 1: Reverse Cuthill-McKee.\n");
+         hypre_printf("  -ilu_tri_solve <0/1>             : 0: iterative solve. 1: direct solve.\n");
+         hypre_printf("  -ilu_ljac_iters <val>            : set number of lower Jacobi iterations for the triangular L solves when using iterative solve approach.\n");
+         hypre_printf("  -ilu_ujac_iters <val>            : set number of upper Jacobi iterations for the triangular U solves when using iterative solve approach.\n");
+         hypre_printf("  -ilu_iter_setup_type <val>       : set iterative ILU setup algorithm.\n");
+         hypre_printf("  -ilu_iter_setup_option <val>     : set iterative ILU setup option.\n");
+         hypre_printf("  -ilu_iter_setup_max_iter <val>   : set max. number of iterations for iterative ILU setup.\n");
+         hypre_printf("  -ilu_iter_setup_tolerance <val>  : set stopping tolerance for iterative ILU setup.\n");
          hypre_printf("  -ilu_sm_max_iter   <val>         : set number of iterations when applied as a smmother in AMG = val \n");
          /* end ILU options */
          /* hypre FSAI options */
@@ -4465,6 +4507,14 @@ main( hypre_int argc,
       HYPRE_BoomerAMGSetILUDroptol(amg_solver, ilu_droptol);
       HYPRE_BoomerAMGSetILUMaxRowNnz(amg_solver, ilu_max_row_nnz);
       HYPRE_BoomerAMGSetILUMaxIter(amg_solver, ilu_sm_max_iter);
+      HYPRE_BoomerAMGSetILUTriSolve(amg_solver, ilu_tri_solve);
+      HYPRE_BoomerAMGSetILULowerJacobiIters(amg_solver, ilu_ljac_iters);
+      HYPRE_BoomerAMGSetILUUpperJacobiIters(amg_solver, ilu_ujac_iters);
+      HYPRE_BoomerAMGSetILULocalReordering(amg_solver, ilu_reordering);
+      HYPRE_BoomerAMGSetILUIterSetupType(amg_solver, ilu_iter_setup_type);
+      HYPRE_BoomerAMGSetILUIterSetupOption(amg_solver, ilu_iter_setup_option);
+      HYPRE_BoomerAMGSetILUIterSetupMaxIter(amg_solver, ilu_iter_setup_max_iter);
+      HYPRE_BoomerAMGSetILUIterSetupTolerance(amg_solver, ilu_iter_setup_tolerance);
       HYPRE_BoomerAMGSetFSAIAlgoType(amg_solver, fsai_algo_type);
       HYPRE_BoomerAMGSetFSAILocalSolveType(amg_solver, fsai_ls_type);
       HYPRE_BoomerAMGSetFSAIMaxSteps(amg_solver, fsai_max_steps);
@@ -4772,6 +4822,19 @@ main( hypre_int argc,
       HYPRE_BoomerAMGSetEuLevel(amg_solver, eu_level);
       HYPRE_BoomerAMGSetEuBJ(amg_solver, eu_bj);
       HYPRE_BoomerAMGSetEuSparseA(amg_solver, eu_sparse_A);
+      HYPRE_BoomerAMGSetILUType(amg_solver, ilu_type);
+      HYPRE_BoomerAMGSetILULevel(amg_solver, ilu_lfil);
+      HYPRE_BoomerAMGSetILUDroptol(amg_solver, ilu_droptol);
+      HYPRE_BoomerAMGSetILUMaxRowNnz(amg_solver, ilu_max_row_nnz);
+      HYPRE_BoomerAMGSetILUMaxIter(amg_solver, ilu_sm_max_iter);
+      HYPRE_BoomerAMGSetILUTriSolve(amg_solver, ilu_tri_solve);
+      HYPRE_BoomerAMGSetILULowerJacobiIters(amg_solver, ilu_ljac_iters);
+      HYPRE_BoomerAMGSetILUUpperJacobiIters(amg_solver, ilu_ujac_iters);
+      HYPRE_BoomerAMGSetILULocalReordering(amg_solver, ilu_reordering);
+      HYPRE_BoomerAMGSetILUIterSetupType(amg_solver, ilu_iter_setup_type);
+      HYPRE_BoomerAMGSetILUIterSetupOption(amg_solver, ilu_iter_setup_option);
+      HYPRE_BoomerAMGSetILUIterSetupMaxIter(amg_solver, ilu_iter_setup_max_iter);
+      HYPRE_BoomerAMGSetILUIterSetupTolerance(amg_solver, ilu_iter_setup_tolerance);
       HYPRE_BoomerAMGSetFSAIAlgoType(amg_solver, fsai_algo_type);
       HYPRE_BoomerAMGSetFSAILocalSolveType(amg_solver, fsai_ls_type);
       HYPRE_BoomerAMGSetFSAIMaxSteps(amg_solver, fsai_max_steps);
@@ -4989,6 +5052,19 @@ main( hypre_int argc,
          HYPRE_BoomerAMGSetEuLevel(pcg_precond, eu_level);
          HYPRE_BoomerAMGSetEuBJ(pcg_precond, eu_bj);
          HYPRE_BoomerAMGSetEuSparseA(pcg_precond, eu_sparse_A);
+         HYPRE_BoomerAMGSetILUType(pcg_precond, ilu_type);
+         HYPRE_BoomerAMGSetILULevel(pcg_precond, ilu_lfil);
+         HYPRE_BoomerAMGSetILUDroptol(pcg_precond, ilu_droptol);
+         HYPRE_BoomerAMGSetILUMaxRowNnz(pcg_precond, ilu_max_row_nnz);
+         HYPRE_BoomerAMGSetILUMaxIter(pcg_precond, ilu_sm_max_iter);
+         HYPRE_BoomerAMGSetILUTriSolve(pcg_precond, ilu_tri_solve);
+         HYPRE_BoomerAMGSetILULowerJacobiIters(pcg_precond, ilu_ljac_iters);
+         HYPRE_BoomerAMGSetILUUpperJacobiIters(pcg_precond, ilu_ujac_iters);
+         HYPRE_BoomerAMGSetILULocalReordering(pcg_precond, ilu_reordering);
+         HYPRE_BoomerAMGSetILUIterSetupType(pcg_precond, ilu_iter_setup_type);
+         HYPRE_BoomerAMGSetILUIterSetupOption(pcg_precond, ilu_iter_setup_option);
+         HYPRE_BoomerAMGSetILUIterSetupMaxIter(pcg_precond, ilu_iter_setup_max_iter);
+         HYPRE_BoomerAMGSetILUIterSetupTolerance(pcg_precond, ilu_iter_setup_tolerance);
          HYPRE_BoomerAMGSetFSAIAlgoType(pcg_precond, fsai_algo_type);
          HYPRE_BoomerAMGSetFSAILocalSolveType(pcg_precond, fsai_ls_type);
          HYPRE_BoomerAMGSetFSAIMaxSteps(pcg_precond, fsai_max_steps);
@@ -5162,6 +5238,19 @@ main( hypre_int argc,
          HYPRE_BoomerAMGSetEuLevel(pcg_precond, eu_level);
          HYPRE_BoomerAMGSetEuBJ(pcg_precond, eu_bj);
          HYPRE_BoomerAMGSetEuSparseA(pcg_precond, eu_sparse_A);
+         HYPRE_BoomerAMGSetILUType(pcg_precond, ilu_type);
+         HYPRE_BoomerAMGSetILULevel(pcg_precond, ilu_lfil);
+         HYPRE_BoomerAMGSetILUDroptol(pcg_precond, ilu_droptol);
+         HYPRE_BoomerAMGSetILUMaxRowNnz(pcg_precond, ilu_max_row_nnz);
+         HYPRE_BoomerAMGSetILUMaxIter(pcg_precond, ilu_sm_max_iter);
+         HYPRE_BoomerAMGSetILUTriSolve(pcg_precond, ilu_tri_solve);
+         HYPRE_BoomerAMGSetILULowerJacobiIters(pcg_precond, ilu_ljac_iters);
+         HYPRE_BoomerAMGSetILUUpperJacobiIters(pcg_precond, ilu_ujac_iters);
+         HYPRE_BoomerAMGSetILULocalReordering(pcg_precond, ilu_reordering);
+         HYPRE_BoomerAMGSetILUIterSetupType(pcg_precond, ilu_iter_setup_type);
+         HYPRE_BoomerAMGSetILUIterSetupOption(pcg_precond, ilu_iter_setup_option);
+         HYPRE_BoomerAMGSetILUIterSetupMaxIter(pcg_precond, ilu_iter_setup_max_iter);
+         HYPRE_BoomerAMGSetILUIterSetupTolerance(pcg_precond, ilu_iter_setup_tolerance);
          HYPRE_BoomerAMGSetFSAIAlgoType(pcg_precond, fsai_algo_type);
          HYPRE_BoomerAMGSetFSAILocalSolveType(pcg_precond, fsai_ls_type);
          HYPRE_BoomerAMGSetFSAIMaxSteps(pcg_precond, fsai_max_steps);
@@ -6683,6 +6772,19 @@ main( hypre_int argc,
          HYPRE_BoomerAMGSetEuLevel(amg_precond, eu_level);
          HYPRE_BoomerAMGSetEuBJ(amg_precond, eu_bj);
          HYPRE_BoomerAMGSetEuSparseA(amg_precond, eu_sparse_A);
+         HYPRE_BoomerAMGSetILUType(amg_precond, ilu_type);
+         HYPRE_BoomerAMGSetILULevel(amg_precond, ilu_lfil);
+         HYPRE_BoomerAMGSetILUDroptol(amg_precond, ilu_droptol);
+         HYPRE_BoomerAMGSetILUMaxRowNnz(amg_precond, ilu_max_row_nnz);
+         HYPRE_BoomerAMGSetILUMaxIter(amg_precond, ilu_sm_max_iter);
+         HYPRE_BoomerAMGSetILUTriSolve(amg_precond, ilu_tri_solve);
+         HYPRE_BoomerAMGSetILULowerJacobiIters(amg_precond, ilu_ljac_iters);
+         HYPRE_BoomerAMGSetILUUpperJacobiIters(amg_precond, ilu_ujac_iters);
+         HYPRE_BoomerAMGSetILULocalReordering(amg_precond, ilu_reordering);
+         HYPRE_BoomerAMGSetILUIterSetupType(amg_precond, ilu_iter_setup_type);
+         HYPRE_BoomerAMGSetILUIterSetupOption(amg_precond, ilu_iter_setup_option);
+         HYPRE_BoomerAMGSetILUIterSetupMaxIter(amg_precond, ilu_iter_setup_max_iter);
+         HYPRE_BoomerAMGSetILUIterSetupTolerance(amg_precond, ilu_iter_setup_tolerance);
          HYPRE_BoomerAMGSetFSAIAlgoType(amg_precond, fsai_algo_type);
          HYPRE_BoomerAMGSetFSAILocalSolveType(amg_precond, fsai_ls_type);
          HYPRE_BoomerAMGSetFSAIMaxSteps(amg_precond, fsai_max_steps);
@@ -6870,6 +6972,19 @@ main( hypre_int argc,
          HYPRE_BoomerAMGSetEuLevel(pcg_precond, eu_level);
          HYPRE_BoomerAMGSetEuBJ(pcg_precond, eu_bj);
          HYPRE_BoomerAMGSetEuSparseA(pcg_precond, eu_sparse_A);
+         HYPRE_BoomerAMGSetILUType(pcg_precond, ilu_type);
+         HYPRE_BoomerAMGSetILULevel(pcg_precond, ilu_lfil);
+         HYPRE_BoomerAMGSetILUDroptol(pcg_precond, ilu_droptol);
+         HYPRE_BoomerAMGSetILUMaxRowNnz(pcg_precond, ilu_max_row_nnz);
+         HYPRE_BoomerAMGSetILUMaxIter(pcg_precond, ilu_sm_max_iter);
+         HYPRE_BoomerAMGSetILUTriSolve(pcg_precond, ilu_tri_solve);
+         HYPRE_BoomerAMGSetILULowerJacobiIters(pcg_precond, ilu_ljac_iters);
+         HYPRE_BoomerAMGSetILUUpperJacobiIters(pcg_precond, ilu_ujac_iters);
+         HYPRE_BoomerAMGSetILULocalReordering(pcg_precond, ilu_reordering);
+         HYPRE_BoomerAMGSetILUIterSetupType(pcg_precond, ilu_iter_setup_type);
+         HYPRE_BoomerAMGSetILUIterSetupOption(pcg_precond, ilu_iter_setup_option);
+         HYPRE_BoomerAMGSetILUIterSetupMaxIter(pcg_precond, ilu_iter_setup_max_iter);
+         HYPRE_BoomerAMGSetILUIterSetupTolerance(pcg_precond, ilu_iter_setup_tolerance);
          HYPRE_BoomerAMGSetFSAIAlgoType(pcg_precond, fsai_algo_type);
          HYPRE_BoomerAMGSetFSAILocalSolveType(pcg_precond, fsai_ls_type);
          HYPRE_BoomerAMGSetFSAIMaxSteps(pcg_precond, fsai_max_steps);
@@ -6973,6 +7088,10 @@ main( hypre_int argc,
          HYPRE_ILUSetTriSolve(pcg_precond, ilu_tri_solve);
          HYPRE_ILUSetLowerJacobiIters(pcg_precond, ilu_ljac_iters);
          HYPRE_ILUSetUpperJacobiIters(pcg_precond, ilu_ujac_iters);
+         HYPRE_ILUSetIterativeSetupType(pcg_precond, ilu_iter_setup_type);
+         HYPRE_ILUSetIterativeSetupOption(pcg_precond, ilu_iter_setup_option);
+         HYPRE_ILUSetIterativeSetupMaxIter(pcg_precond, ilu_iter_setup_max_iter);
+         HYPRE_ILUSetIterativeSetupTolerance(pcg_precond, ilu_iter_setup_tolerance);
          /* set print level */
          HYPRE_ILUSetPrintLevel(pcg_precond, poutdat);
          /* set max iterations */
@@ -7238,6 +7357,19 @@ main( hypre_int argc,
          HYPRE_BoomerAMGSetEuLevel(pcg_precond, eu_level);
          HYPRE_BoomerAMGSetEuBJ(pcg_precond, eu_bj);
          HYPRE_BoomerAMGSetEuSparseA(pcg_precond, eu_sparse_A);
+         HYPRE_BoomerAMGSetILUType(pcg_precond, ilu_type);
+         HYPRE_BoomerAMGSetILULevel(pcg_precond, ilu_lfil);
+         HYPRE_BoomerAMGSetILUDroptol(pcg_precond, ilu_droptol);
+         HYPRE_BoomerAMGSetILUMaxRowNnz(pcg_precond, ilu_max_row_nnz);
+         HYPRE_BoomerAMGSetILUMaxIter(pcg_precond, ilu_sm_max_iter);
+         HYPRE_BoomerAMGSetILUTriSolve(pcg_precond, ilu_tri_solve);
+         HYPRE_BoomerAMGSetILULowerJacobiIters(pcg_precond, ilu_ljac_iters);
+         HYPRE_BoomerAMGSetILUUpperJacobiIters(pcg_precond, ilu_ujac_iters);
+         HYPRE_BoomerAMGSetILULocalReordering(pcg_precond, ilu_reordering);
+         HYPRE_BoomerAMGSetILUIterSetupType(pcg_precond, ilu_iter_setup_type);
+         HYPRE_BoomerAMGSetILUIterSetupOption(pcg_precond, ilu_iter_setup_option);
+         HYPRE_BoomerAMGSetILUIterSetupMaxIter(pcg_precond, ilu_iter_setup_max_iter);
+         HYPRE_BoomerAMGSetILUIterSetupTolerance(pcg_precond, ilu_iter_setup_tolerance);
          HYPRE_BoomerAMGSetFSAIAlgoType(pcg_precond, fsai_algo_type);
          HYPRE_BoomerAMGSetFSAILocalSolveType(pcg_precond, fsai_ls_type);
          HYPRE_BoomerAMGSetFSAIMaxSteps(pcg_precond, fsai_max_steps);
@@ -7448,6 +7580,19 @@ main( hypre_int argc,
          HYPRE_BoomerAMGSetEuLevel(pcg_precond, eu_level);
          HYPRE_BoomerAMGSetEuBJ(pcg_precond, eu_bj);
          HYPRE_BoomerAMGSetEuSparseA(pcg_precond, eu_sparse_A);
+         HYPRE_BoomerAMGSetILUType(pcg_precond, ilu_type);
+         HYPRE_BoomerAMGSetILULevel(pcg_precond, ilu_lfil);
+         HYPRE_BoomerAMGSetILUDroptol(pcg_precond, ilu_droptol);
+         HYPRE_BoomerAMGSetILUMaxRowNnz(pcg_precond, ilu_max_row_nnz);
+         HYPRE_BoomerAMGSetILUMaxIter(pcg_precond, ilu_sm_max_iter);
+         HYPRE_BoomerAMGSetILUTriSolve(pcg_precond, ilu_tri_solve);
+         HYPRE_BoomerAMGSetILULowerJacobiIters(pcg_precond, ilu_ljac_iters);
+         HYPRE_BoomerAMGSetILUUpperJacobiIters(pcg_precond, ilu_ujac_iters);
+         HYPRE_BoomerAMGSetILULocalReordering(pcg_precond, ilu_reordering);
+         HYPRE_BoomerAMGSetILUIterSetupType(pcg_precond, ilu_iter_setup_type);
+         HYPRE_BoomerAMGSetILUIterSetupOption(pcg_precond, ilu_iter_setup_option);
+         HYPRE_BoomerAMGSetILUIterSetupMaxIter(pcg_precond, ilu_iter_setup_max_iter);
+         HYPRE_BoomerAMGSetILUIterSetupTolerance(pcg_precond, ilu_iter_setup_tolerance);
          HYPRE_BoomerAMGSetFSAIAlgoType(pcg_precond, fsai_algo_type);
          HYPRE_BoomerAMGSetFSAILocalSolveType(pcg_precond, fsai_ls_type);
          HYPRE_BoomerAMGSetFSAIMaxSteps(pcg_precond, fsai_max_steps);
@@ -7630,6 +7775,10 @@ main( hypre_int argc,
          HYPRE_ILUSetTriSolve(pcg_precond, ilu_tri_solve);
          HYPRE_ILUSetLowerJacobiIters(pcg_precond, ilu_ljac_iters);
          HYPRE_ILUSetUpperJacobiIters(pcg_precond, ilu_ujac_iters);
+         HYPRE_ILUSetIterativeSetupType(pcg_precond, ilu_iter_setup_type);
+         HYPRE_ILUSetIterativeSetupOption(pcg_precond, ilu_iter_setup_option);
+         HYPRE_ILUSetIterativeSetupMaxIter(pcg_precond, ilu_iter_setup_max_iter);
+         HYPRE_ILUSetIterativeSetupTolerance(pcg_precond, ilu_iter_setup_tolerance);
          /* set print level */
          HYPRE_ILUSetPrintLevel(pcg_precond, poutdat);
          /* set max iterations */
@@ -7864,6 +8013,19 @@ main( hypre_int argc,
          HYPRE_BoomerAMGSetEuLevel(pcg_precond, eu_level);
          HYPRE_BoomerAMGSetEuBJ(pcg_precond, eu_bj);
          HYPRE_BoomerAMGSetEuSparseA(pcg_precond, eu_sparse_A);
+         HYPRE_BoomerAMGSetILUType(pcg_precond, ilu_type);
+         HYPRE_BoomerAMGSetILULevel(pcg_precond, ilu_lfil);
+         HYPRE_BoomerAMGSetILUDroptol(pcg_precond, ilu_droptol);
+         HYPRE_BoomerAMGSetILUMaxRowNnz(pcg_precond, ilu_max_row_nnz);
+         HYPRE_BoomerAMGSetILUMaxIter(pcg_precond, ilu_sm_max_iter);
+         HYPRE_BoomerAMGSetILUTriSolve(pcg_precond, ilu_tri_solve);
+         HYPRE_BoomerAMGSetILULowerJacobiIters(pcg_precond, ilu_ljac_iters);
+         HYPRE_BoomerAMGSetILUUpperJacobiIters(pcg_precond, ilu_ujac_iters);
+         HYPRE_BoomerAMGSetILULocalReordering(pcg_precond, ilu_reordering);
+         HYPRE_BoomerAMGSetILUIterSetupType(pcg_precond, ilu_iter_setup_type);
+         HYPRE_BoomerAMGSetILUIterSetupOption(pcg_precond, ilu_iter_setup_option);
+         HYPRE_BoomerAMGSetILUIterSetupMaxIter(pcg_precond, ilu_iter_setup_max_iter);
+         HYPRE_BoomerAMGSetILUIterSetupTolerance(pcg_precond, ilu_iter_setup_tolerance);
          HYPRE_BoomerAMGSetFSAIAlgoType(pcg_precond, fsai_algo_type);
          HYPRE_BoomerAMGSetFSAILocalSolveType(pcg_precond, fsai_ls_type);
          HYPRE_BoomerAMGSetFSAIMaxSteps(pcg_precond, fsai_max_steps);
@@ -8269,6 +8431,19 @@ main( hypre_int argc,
          HYPRE_BoomerAMGSetEuLevel(pcg_precond, eu_level);
          HYPRE_BoomerAMGSetEuBJ(pcg_precond, eu_bj);
          HYPRE_BoomerAMGSetEuSparseA(pcg_precond, eu_sparse_A);
+         HYPRE_BoomerAMGSetILUType(pcg_precond, ilu_type);
+         HYPRE_BoomerAMGSetILULevel(pcg_precond, ilu_lfil);
+         HYPRE_BoomerAMGSetILUDroptol(pcg_precond, ilu_droptol);
+         HYPRE_BoomerAMGSetILUMaxRowNnz(pcg_precond, ilu_max_row_nnz);
+         HYPRE_BoomerAMGSetILUMaxIter(pcg_precond, ilu_sm_max_iter);
+         HYPRE_BoomerAMGSetILUTriSolve(pcg_precond, ilu_tri_solve);
+         HYPRE_BoomerAMGSetILULowerJacobiIters(pcg_precond, ilu_ljac_iters);
+         HYPRE_BoomerAMGSetILUUpperJacobiIters(pcg_precond, ilu_ujac_iters);
+         HYPRE_BoomerAMGSetILULocalReordering(pcg_precond, ilu_reordering);
+         HYPRE_BoomerAMGSetILUIterSetupType(pcg_precond, ilu_iter_setup_type);
+         HYPRE_BoomerAMGSetILUIterSetupOption(pcg_precond, ilu_iter_setup_option);
+         HYPRE_BoomerAMGSetILUIterSetupMaxIter(pcg_precond, ilu_iter_setup_max_iter);
+         HYPRE_BoomerAMGSetILUIterSetupTolerance(pcg_precond, ilu_iter_setup_tolerance);
          HYPRE_BoomerAMGSetFSAIAlgoType(pcg_precond, fsai_algo_type);
          HYPRE_BoomerAMGSetFSAILocalSolveType(pcg_precond, fsai_ls_type);
          HYPRE_BoomerAMGSetFSAIMaxSteps(pcg_precond, fsai_max_steps);
@@ -8933,8 +9108,11 @@ main( hypre_int argc,
       HYPRE_ILUSetDropThreshold(ilu_solver, ilu_droptol);
       HYPRE_ILUSetTol(ilu_solver, tol);
       /* set max iterations for Schur system solve */
-      HYPRE_ILUSetSchurMaxIter( ilu_solver, ilu_schur_max_iter );
-
+      HYPRE_ILUSetSchurMaxIter(ilu_solver, ilu_schur_max_iter);
+      HYPRE_ILUSetIterativeSetupType(ilu_solver, ilu_iter_setup_type);
+      HYPRE_ILUSetIterativeSetupOption(ilu_solver, ilu_iter_setup_option);
+      HYPRE_ILUSetIterativeSetupMaxIter(ilu_solver, ilu_iter_setup_max_iter);
+      HYPRE_ILUSetIterativeSetupTolerance(ilu_solver, ilu_iter_setup_tolerance);
       /* setting for NSH */
       if (ilu_type == 20 || ilu_type == 21)
       {
