@@ -77,7 +77,6 @@ typedef struct _hypre_ParCSRCommPkg
    long                             *global_send_indices;
    long                             *global_recv_indices;
 #endif
-   /* remote communication information */
    hypre_MPI_Datatype               *send_mpi_types;
    hypre_MPI_Datatype               *recv_mpi_types;
 #ifdef HYPRE_USING_PERSISTENT_COMM
