@@ -3127,6 +3127,17 @@ hypre_BoomerAMGSetup( void               *amg_vdata,
          A_array[level] = A_H;
       }
 
+#ifdef HYPRE_USING_NODE_AWARE_MPI
+      if (level >= hypre_HandleNodeAwareSwitchoverThreshold(hypre_handle()))
+      {
+         hypre_ParCSRMatrixCommPkg(A)->use_neighbor = 1;
+         hypre_ParCSRCreateCommGraph( hypre_ParCSRMatrixFirstColDiag(A),
+                                      hypre_ParCSRMatrixColMapOffd(A),
+                                      hypre_ParCSRMatrixComm(A),
+                                      hypre_ParCSRMatrixCommPkg(A));
+      }
+#endif
+
       size = ((HYPRE_Real) fine_size ) * .75;
       if (coarsen_type > 0 && coarse_size >= (HYPRE_BigInt) size)
       {
@@ -3958,6 +3969,28 @@ hypre_BoomerAMGSetup( void               *amg_vdata,
       }
    }
 #endif
+
+
+#ifdef HYPRE_USING_NODE_AWARE_MPI
+   for (level = 0; level < (num_levels - 1); level++)
+   {
+      hypre_ParCSRCommPkg *comm_pkg = P_array[level]->comm_pkg;
+      if (P_array[level]->comm_pkg->use_neighbor) {
+         //hypre_printf("################# Resetting use_neighbor on P_array\n");
+         MPIX_Topo_free(P_array[level]->comm_pkg->neighbor_topo);
+         MPIX_Topo_free(P_array[level]->comm_pkg->neighborT_topo);
+         MPIX_Comm_free(P_array[level]->comm_pkg->neighbor_comm);
+         hypre_ParCSRCommHandle *comm_handle = hypre_ParCSRCommPkgGetPersistentCommHandle(1, comm_pkg);
+         hypre_ParCSRCommHandle *comm_handleT = hypre_ParCSRCommPkgGetPersistentCommHandle(2, comm_pkg);
+         hypre_ParCSRCommHandleDestroy(comm_handle);
+         hypre_ParCSRCommHandleDestroy(comm_handleT);
+         P_array[level]->comm_pkg->use_neighbor = 0;
+         hypre_ParCSRCommPkgGetPersistentCommHandle(1, comm_pkg);
+         hypre_ParCSRCommPkgGetPersistentCommHandle(2, comm_pkg);
+      }
+   }
+#endif
+
 
    /* run compatible relaxation on all levels and print results */
 #if 0
