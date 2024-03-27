@@ -3130,11 +3130,11 @@ hypre_BoomerAMGSetup( void               *amg_vdata,
 #ifdef HYPRE_USING_NODE_AWARE_MPI
       if (level >= hypre_HandleNodeAwareSwitchoverThreshold(hypre_handle()))
       {
-         hypre_ParCSRMatrixCommPkg(A)->use_neighbor = 1;
-         hypre_ParCSRCreateCommGraph( hypre_ParCSRMatrixFirstColDiag(A),
-                                      hypre_ParCSRMatrixColMapOffd(A),
-                                      hypre_ParCSRMatrixComm(A),
-                                      hypre_ParCSRMatrixCommPkg(A));
+         hypre_ParCSRMatrixCommPkg(A_array[level])->use_neighbor = 1;
+         hypre_ParCSRCreateCommGraph( hypre_ParCSRMatrixFirstColDiag(A_array[level]),
+                                      hypre_ParCSRMatrixColMapOffd(A_array[level]),
+                                      hypre_ParCSRMatrixComm(A_array[level]),
+                                      hypre_ParCSRMatrixCommPkg(A_array[level]));
       }
 #endif
 
