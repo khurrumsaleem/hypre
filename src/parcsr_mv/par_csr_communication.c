@@ -613,9 +613,6 @@ hypre_ParCSRPersistentCommHandleStart( hypre_ParCSRPersistentCommHandle *comm_ha
    } else {
       if (comm_handle->Xrequest)
       {
-         //int rank;
-         //MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-         //if (rank == 0) { hypre_printf("Node-aware starting\n"); }
          hypre_TMemcpy( hypre_ParCSRCommHandleSendDataBuffer(comm_handle),
                         send_data,
                         char,
@@ -666,7 +663,6 @@ hypre_ParCSRPersistentCommHandleWait( hypre_ParCSRPersistentCommHandle *comm_han
 #ifdef HYPRE_USING_NODE_AWARE_MPI
    hypre_ParCSRCommPkg *comm_pkg = hypre_ParCSRCommHandleCommPkg(comm_handle);
    if (!comm_pkg->use_neighbor) {
-      //if (rank == 0) { hypre_printf("wait not using node aware\n"); }
       if (hypre_ParCSRCommHandleNumRequests(comm_handle) > 0)
       {
          HYPRE_Int ret = hypre_MPI_Waitall(hypre_ParCSRCommHandleNumRequests(comm_handle),
@@ -685,11 +681,9 @@ hypre_ParCSRPersistentCommHandleWait( hypre_ParCSRPersistentCommHandle *comm_han
                        recv_memory_location,
                        HYPRE_MEMORY_HOST);
       }
-      //if (rank == 0) { hypre_printf("wait done not using node aware\n"); }
    } else {
       if (comm_handle->Xrequest)
       {
-         //if (rank == 0) { hypre_printf("Node-aware waiting\n"); }
          HYPRE_Int ret = (HYPRE_Int) MPIX_Wait(comm_handle->Xrequest,
                                                MPI_STATUS_IGNORE);
 
